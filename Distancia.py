@@ -3,6 +3,7 @@ import time
 import urllib.parse
 import pandas as pd
 import requests
+
 from tkinter import filedialog, messagebox, Tk, Label, Entry, Button
 #bingKey = "Av1PKSJKBf7UelqTaSCjNXjo0Qfo6HmPtoarsL6OB0wJKCrlJ6cWa6KEWARmmpRu"
 global cidOri
@@ -47,28 +48,46 @@ def processa():
 
             route = "http://dev.virtualearth.net/REST/v1/Routes?wayPoint.1=" + \
                     origem + "&wayPoint.2=" + destino + "&key=" + bingKey
-            try:
-                r = requests.get(route)
-                if r.status_code != 200:
+
+            r = requests.get(route)
+            if r.status_code != 200:
+                print(r.status_code)
+                cont = 0
+                while (r.status_code != 200) and (cont < 10):
+                    cont = cont + 1
+                    r = requests.get(route)
                     print(r.status_code)
-                    cont = 0
-                    while (r.status_code != 200) and (cont < 10):
-                        cont = cont + 1
-                        r = requests.get(route)
-                        print(r.status_code)
-                dt = json.loads(r.content)
-                travelD = '%.2f' % (dt['resourceSets'][0]['resources'][0]['routeLegs'][0]['travelDistance'])
-            except:
-                print(r.content)
-                quit()
-                
-            
+            if r.status_code == 404:
+                messagebox.showerror(title = "Erro de Rota", message="Cidade ou rota não encontrada  :" + cidOri + "-" + cidDes)
+            if (r.status_code == 401) or (r.status_code==403):
+                messagebox.showerror(title = "Erro de Autenticação", message="Erro de autenticação ou serviço indisponivel - Verifique sua chave BING")
+
+            dt = json.loads(r.content)
+            travelD = '%.2f' % (dt['resourceSets'][0]['resources'][0]['routeLegs'][0]['travelDistance'])
+
             travel = travelD.replace('.', ',')
             linha = cidOri + ";" + estOri + ";" + cidDes + ";" + estDes + ";" + travel + "\n"
 
             with open(pathDestino + "\distancias.csv", "a") as arquivo:
                 arquivo.write(linha)
             print(linha)
+            espaco = "                              "
+            label1_1 = Label(Label(window, font=("Lucida Console", 12), text=espaco).place(x=150, y=80), )
+            label1_1 = Label(Label(window, font=("Lucida Console", 12), text=cidOri).place(x=150, y=80), )
+            label2_2 = Label(Label(window, font=("Lucida Console", 12), text=espaco).place(x=150, y=140), )
+            label2_2 = Label(Label(window, font=("Lucida Console", 12), text=cidDes).place(x=150, y=140), )
+            label2_2 = Label(Label(window, font=("Lucida Console", 12), text=espaco).place(x=150, y=200), )
+            label2_2 = Label(Label(window, font=("Lucida Console", 12), text=travel).place(x=150, y=200), )
+            label8 = Label(Label(window, font=("Lucida Console", 12), text=(str(d+1)+"/"+str(lenDes))).place(x=40, y=260), )
+
+            label1_1.pack()
+            label2_2.pack()
+            label3_3.pack()
+            label8.pack()
+
+
+            window.update_idletasks()
+
             d = d + 1
 
             if (float(travelD) < menorDist):
@@ -80,9 +99,27 @@ def processa():
         menDis = str(menorDist).replace('.', ',')
         linha2 = cidOri + ";" + estOri + ";" + menorCid + ";" + menorEst + ";" +str(menDis) + "\n"
 
+
+
         with open(pathDestino + "\menor_distancia.csv", "a") as arquivo:
             arquivo.write(linha2)
         print(linha2)
+
+        espaco = "                              "
+        label5_1 = Label(Label(window, font=("Lucida Console", 12), text=espaco).place(x=590, y=80), )
+        label5_1 = Label(Label(window, font=("Lucida Console", 12), text=cidOri).place(x=590, y=80), )
+        label6_2 = Label(Label(window, font=("Lucida Console", 12), text=espaco).place(x=590, y=140), )
+        label6_2 = Label(Label(window, font=("Lucida Console", 12), text=menorCid).place(x=590, y=140), )
+        label7_3 = Label(Label(window, font=("Lucida Console", 12), text=espaco).place(x=590, y=200), )
+        label7_3 = Label(Label(window, font=("Lucida Console", 12), text=menDis).place(x=590, y=200), )
+        label9 = Label(Label(window, font=("Lucida Console", 12), text=(str(i) + "/" + str(lenOri))).place(x=480, y=260), )
+
+        label5_1.pack()
+        label6_2.pack()
+        label7_3.pack()
+        label9.pack()
+
+        window.update_idletasks()
 
     messagebox.showinfo(title="Calculator Sonda", message="Fim de Processamento")
 
@@ -91,16 +128,33 @@ def processa():
 if __name__ == '__main__':
     window = Tk()
     window.title("Sonda Distancia Calculator")
-    window.config(padx=30, pady=100)
+    window.geometry("900x450")
+
 
     # Labels
-#    website_label = Label(text="URL:")
-#    website_label.grid(row=2, column=0)
+    label0 = Label(Label(window, font=("Lucida Console", 14), text="Distâncias entre Cidade e Base").place(x=40, y=30), )
+    label1 = Label(Label(window, font=("Lucida Console", 12), text="Cidade    :").place(x=40, y=80), )
+    label2 = Label(Label(window, font=("Lucida Console", 12), text="Base      :").place(x=40, y=140), )
+    label3 = Label(Label(window, font=("Lucida Console", 12), text="Distância :").place(x=40, y=200), )
+    label4 = Label(Label(window, font=("Lucida Console", 14), text="Menor Distância").place(x=480, y=30), )
+    label5 = Label(Label(window, font=("Lucida Console", 12), text="Cidade    :").place(x=480,y=80),)
+    label6 = Label(Label(window, font=("Lucida Console", 12), text="Base      :").place(x=480,y=140),)
+    label7 = Label(Label(window, font=("Lucida Console", 12), text="Distância :").place(x=480, y=200), )
+    label1_1 = Label(Label(window, font=("Lucida Console", 12), text="_______________________").place(x=150, y=80), )
+    label2_2 = Label(Label(window, font=("Lucida Console", 12), text="_______________________").place(x=150, y=140), )
+    label3_3 = Label(Label(window, font=("Lucida Console", 12), text="_______________________").place(x=150, y=200), )
+    label5_1 = Label(Label(window, font=("Lucida Console", 12), text="_______________________").place(x=590, y=80), )
+    label6_2 = Label(Label(window, font=("Lucida Console", 12), text="_______________________").place(x=590, y=140), )
+    label7_3 = Label(Label(window, font=("Lucida Console", 12), text="_______________________").place(x=590, y=200), )
+    #label8 = Label(Label(window, font=("Lucida Console", 12), text="XX/XX").place(x=40, y=260), )
+    #label9 = Label(Label(window, font=("Lucida Console", 12), text="XX/XX").place(x=450, y=260), )
+
 
     # Entries
 #    website_entry = Entry(width=35)
 #    website_entry.grid(row=2, column=1, columnspan=2)
 #    website_entry.focus()
-    add_button = Button(text="Iniciar Processamento", width=36, command=processa)
-    add_button.grid(row=6, column=1, columnspan=2)
+    add_button = Button(text="Iniciar Processamento", width=36, command=processa, font=("Lucinda Console", 14))
+    add_button.place(x=250, y=320)
+#    root.update_idletasks()
     window.mainloop()
